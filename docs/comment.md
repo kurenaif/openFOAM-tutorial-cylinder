@@ -1,14 +1,14 @@
 <!-- $theme: default -->
 
 # OpenFOAMで二次元円柱周りの流れを見る
-### 参考: http://opencae.gifu-nct.ac.jp/pukiwiki/index.php?plugin=attach&refer=%C2%E8%A3%B2%A3%B4%B2%F3%CA%D9%B6%AF%B2%F1%A1%A7H250810&openfile=2Dflow_around_cylinder_with_pisoFoam_rev.pdf
+### 参考: [http://opencae.gifu-nct.ac.jp/pukiwiki/index.php?plugin=attach&refer=%C2%E8%A3%B2%A3%B4%B2%F3%CA%D9%B6%AF%B2%F1%A1%A7H250810&openfile=2Dflow_around_cylinder_with_pisoFoam_rev.pdf]()
 
-- - -
+
 
 # 今日の目的: 円柱の$C_D$値を計算してみる
 ![](./image.jpg)
 
-- - -
+
 
 # 本日の流れ
 
@@ -19,17 +19,17 @@
 5. 計算実行(pisoFoam)
 6. 計算結果の表示(paraFoam)
 
-- - -
+
 
 # 1. 円柱(.stl)ファイルの作成
 
 やりました ファイルあげます
 
-- - -
+
 
 #  2. メッシュ作成(blockMesh)
 
-- - -
+
 
 # baseとなるtutorialのコピー
 
@@ -44,7 +44,7 @@ $ mkdir constant/triSurface
 $ mv cylinder-s.stl constant/triSurface
 ```
 
-- - -
+
 `constant/polyMesh/blockMeshDict` 内 17行目以降
 
 ```
@@ -68,7 +68,8 @@ blocks
 );
 ```
 
-- - -
+
+
 # blockMeshDict設定
 
 ```
@@ -111,7 +112,8 @@ boundary
 );
 ```
 
-- - -
+
+
 # blockMeshの実行
 
 0/ だとか constant/ だとか system/ だとかがあるディレクトリに`cd`
@@ -125,14 +127,19 @@ meshの確認をします
 $ mv ./0 ./0.org # これをしないと表示のときにエラー
 $ paraFoam #結果の確認
 ```
+
 薄めの直方体が出来るはず
-- - -
+
+
+
 # 3. メッシュ作成(snappyHexMesh)
 1から作るのはめんどくさいので`tutorials`から持ってくる
+
 ```bash
 $ cp ~/OpenFOAM/OpenFAOM-2.4.0/tutorials/incompressible/ \
 pisoFoam/les/motorBike/motorBike/system/snappyhexMeshDict .
 ```
+
 ```
     29	geometry
     30	{
@@ -143,6 +150,7 @@ pisoFoam/les/motorBike/motorBike/system/snappyhexMeshDict .
     35		}
     36	};
 ```
+
 ```
    103	    refinementSurfaces
    104	    {
@@ -152,19 +160,25 @@ pisoFoam/les/motorBike/motorBike/system/snappyhexMeshDict .
    108			 }
    109	    }
 ```
+
 ```
  146	    locationInMesh (-0.01 0 0.0005);
 ```
+
 snappyHexMeshの実行
+
 ```
 $ snappyHexMesh # この時 0/が存在してはいけない
 ```
+
 確認
+
 ```
 $ paraFoam
 ```
 
-- - -
+
+
 # snappyHexMeshのmesh情報をコピー
 
 ```bash
@@ -174,7 +188,8 @@ $ cp -r 0.01/polyMesh/* constant/polyMesh/
 ```bash
 $ rm -r 0.005/ 0.01/ # こいつらはもう不要
 ```
-- - -
+
+
 # 物性値と解析モデル
 
 `constant/RASProperties` ファイル
@@ -184,12 +199,14 @@ turbulence	off;
 ```
 
 ## 動粘性係数 (多分変更なし)
+
 `constant/transportProperties`
+
 ```bash
 nu 	nu[ 0 2 -1 0 0 0 0 ] 1e-5;
 ```
 
-- - -
+
 
 # controlDict
 
@@ -212,7 +229,7 @@ timePrecision   6;
 runTimeModifiable true;
 ```
 
-- - -
+
 
 # 0.org/の設定
 
@@ -222,7 +239,8 @@ p, U以外は不要なので削除
 $ rm epsilon k nut nuTilda
 ```
 
-- - -
+
+
 # 0.org/U(流速の設定)
 
 ```bash
@@ -258,7 +276,9 @@ boundaryField
 	}
 }
 ```
-- - -
+
+
+
 # 0.org/p
 ```bash
 internalField   uniform 0;
@@ -291,7 +311,8 @@ boundaryField
 }
 ```
 
-- - -
+
+
 # 実行
 
 ```bash
@@ -303,7 +324,8 @@ $ pisoFoam > piso.log
 $ paraFoam
 ```
 
-- - -
+
+
 # CD(Constant Drag, 空気抗力係数)値 とは
 
 * 簡単に言うと, その形が受ける無次元化された力
@@ -323,7 +345,8 @@ $ paraFoam
 |$U$|速度|
 |$S$|前面投影面積|
 
-- - -
+
+
 # OpenFOAMでCD値を求める方法
 * すっごく簡単
 ```bash
@@ -331,7 +354,9 @@ $ cp ~/OpenFOAM/OpenFOAM-2.4.0/tutorials/ \
 incompressible/pisoFoam/les/ \
 motorBike/motorBike/system/forceCoeffs system/
 ```
-- - -
+
+
+
 
 ```
 forces
@@ -356,7 +381,8 @@ forces
     Aref        1.0E-5;        // Estimated
 }
 ```
-- - -
+
+
 # system/controlDictの追加
 
 ```bash
@@ -372,7 +398,8 @@ $ pisoFoam > piso.log
 ```
 * どうせ一緒なのでparaFoamはいらないです
 
-- - -
+
+
 # 結果の確認
 `postProcessing/forces/0/forceCoeffs.dat` を見てみよう
 
@@ -382,7 +409,7 @@ $ pisoFoam > piso.log
 * $C_D$値の値は安定? 定常? 一定?
 * どの値を取るのが適切か → 自分で考える
 
-- - -
+
 
 # レイノルズ数$Re$
 
@@ -402,7 +429,8 @@ ref) http://www.cybernet.co.jp/ansys/case/lesson/004.html
 ref) https://ja.wikipedia.org/wiki/%E3%83%AC%E3%82%A4%E3%83%8E%E3%83%AB%E3%82%BA%E6%95%B0
 (visited 2016-10-19)
 
-- - -
+
+
 # $Re$の利点
 無次元化されているので, 大きさに関係せず, 相対的な速度で考えることができる.
 たとえば, 円柱周りの流れでも, 大きくしたり, 直径を変えたり, 粘性係数(たとえば空気にしたり)を変えても、
@@ -410,7 +438,8 @@ $Re$が同じならば似たような流れになる.
 
 もちろん, 代表長さ$L$のとり方によって$Re$が変わってくるので, 慎重に選ぶ必要がある.
 
-- - -
+
+
 # クーラン数(Courant Number)
 クーラン数$C$は, 以下の式で求めることができる.
 1ステップあたりの時間が経過したときに, 流れの要素いくつ分進むか
@@ -426,7 +455,9 @@ $$C = \frac{u \Delta t}{\Delta L}$$
 
 ref) http://www.cradle.co.jp/tec/column01/017.html
 (visited: 2016-10-19)
-- - -
+
+
+
 # クーラン数を見てみよう
 * `pisoFoam`実行時の標準出力に出てくる.
 ```bash
@@ -435,7 +466,8 @@ grep -v Execution
 ```
 * クーラン数は1未満でなければならない。(格子を飛び越していってしまうため)
 
-- - -
+
+
 # クーラン数を大きくするということ
 $$C = \frac{U \Delta t}{\Delta L} < 1$$
 * 細かく計算したいとき...
@@ -446,12 +478,14 @@ $$C = \frac{U \Delta t}{\Delta L} < 1$$
 $\Delta t$ を小さくする必要がある ... 計算時間がかかる
 meshを細かくしたら計算数も多くなり, より計算時間がかかる
 
-- - -
+
+
 #### 残った時間で
 # $Re$と$C_D$値の関係を見てみよう
 ## 自分で$Re$と$C_D$値のグラフを探して比較する
 
-- - -
+
+
 # $Re$を変えるにはどうするか?
 $$Re = \frac{U \cdot L}{\nu}$$
 * ($L$の変え方: surfaceTransformPoints) ← やったことない
