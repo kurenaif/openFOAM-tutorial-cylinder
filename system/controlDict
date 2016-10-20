@@ -30,6 +30,10 @@ writeCompression off;
 timeFormat      general;
 timePrecision   6;
 runTimeModifiable true;
+functions
+{
+   #include "forceCoeffs"
+}
 
 
 // ************************************************************************* //
